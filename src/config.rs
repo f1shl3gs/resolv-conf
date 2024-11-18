@@ -1,8 +1,9 @@
 use std::fmt;
-use std::iter::{IntoIterator, Iterator};
+use std::iter::{Iterator};
 use std::slice::Iter;
-use {grammar, Network, ParseError, ScopedIp};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+
+use super::{grammar, Network, ParseError, ScopedIp};
 
 const NAMESERVER_LIMIT:usize = 3;
 const SEARCH_LIMIT:usize = 6;
@@ -29,21 +30,18 @@ enum LastSearch {
 /// behavior of GNU libc. (latter requires ``system`` feature enabled)
 ///
 /// ```rust
-/// extern crate resolv_conf;
 ///
 /// use std::net::Ipv4Addr;
 /// use resolv_conf::{Config, ScopedIp};
 ///
-/// fn main() {
 ///     // Create a new config
-///     let mut config = Config::new();
+///     let mut config = Config::default();
 ///     config.nameservers.push(ScopedIp::V4(Ipv4Addr::new(8, 8, 8, 8)));
 ///     config.set_search(vec!["example.com".into()]);
 ///
 ///     // Parse a config
 ///     let parsed = Config::parse("nameserver 8.8.8.8\nsearch example.com").unwrap();
 ///     assert_eq!(parsed, config);
-/// }
 /// ```
 ///
 /// [`glibc_normalize`]: #method.glibc_normalize
@@ -106,14 +104,13 @@ pub struct Config {
     pub family: Vec<Family>,
 }
 
-impl Config {
+impl Default for Config {
     /// Create a new `Config` object with default values.
     ///
     /// ```rust
-    /// # extern crate resolv_conf;
     /// use resolv_conf::Config;
     /// # fn main() {
-    /// let config = Config::new();
+    /// let config = Config::default();
     /// assert_eq!(config.nameservers, vec![]);
     /// assert!(config.get_domain().is_none());
     /// assert!(config.get_search().is_none());
@@ -133,7 +130,7 @@ impl Config {
     /// assert_eq!(config.no_tld_query, false);
     /// assert_eq!(config.use_vc, false);
     /// # }
-    pub fn new() -> Config {
+    fn default() -> Config {
         Config {
             nameservers: Vec::new(),
             domain: None,
@@ -160,11 +157,12 @@ impl Config {
             family: Vec::new(),
         }
     }
+}
 
+impl Config {
     /// Parse a buffer and return the corresponding `Config` object.
     ///
     /// ```rust
-    /// # extern crate resolv_conf;
     /// use resolv_conf::{ScopedIp, Config};
     /// # fn main() {
     /// let config_str = "# /etc/resolv.conf
@@ -187,8 +185,8 @@ impl Config {
     /// Return the suffixes declared in the last "domain" or "search" directive.
     ///
     /// ```rust
-    /// # extern crate resolv_conf;
     /// use resolv_conf::{ScopedIp, Config};
+    ///
     /// # fn main() {
     /// let config_str = "search example.com sub.example.com\ndomain localdomain";
     /// let parsed_config = Config::parse(&config_str).expect("Failed to parse config");
@@ -204,11 +202,11 @@ impl Config {
     ///                            .collect::<Vec<String>>();
     /// assert_eq!(domains, vec![String::from("example.com"), String::from("sub.example.com")]);
     /// # }
-    pub fn get_last_search_or_domain<'a>(&'a self) -> DomainIter<'a> {
+    pub fn get_last_search_or_domain(&self) -> DomainIter {
         let domain_iter = match self.last_search {
             LastSearch::Search => DomainIterInternal::Search(
                 self.get_search()
-                    .and_then(|domains| Some(domains.into_iter())),
+                    .map(|domains| domains.iter()),
             ),
             LastSearch::Domain => DomainIterInternal::Domain(self.get_domain()),
             LastSearch::None => DomainIterInternal::None,
@@ -281,7 +279,7 @@ impl Config {
             return self.domain.clone();
         }
 
-        let hostname = match ::hostname::get().ok() {
+        let hostname = match hostname::get().ok() {
             Some(name) => name.into_string().ok(),
             None => return None,
         };

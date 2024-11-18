@@ -31,18 +31,18 @@ pub enum ScopedIp {
     V6(Ipv6Addr, Option<String>),
 }
 
-impl Into<IpAddr> for ScopedIp {
-    fn into(self) -> IpAddr {
-        match self {
+impl From<ScopedIp> for IpAddr {
+    fn from(value: ScopedIp) -> Self {
+        match value {
             ScopedIp::V4(ip) => IpAddr::from(ip),
             ScopedIp::V6(ip, _) => IpAddr::from(ip),
         }
     }
 }
 
-impl<'a> Into<IpAddr> for &'a ScopedIp {
-    fn into(self) -> IpAddr {
-        match *self {
+impl<'a> From<&'a ScopedIp> for IpAddr {
+    fn from(value: &'a ScopedIp) -> Self {
+        match value {
             ScopedIp::V4(ref ip) => IpAddr::from(*ip),
             ScopedIp::V6(ref ip, _) => IpAddr::from(*ip),
         }
@@ -126,8 +126,8 @@ impl fmt::Display for AddrParseError {
 impl Error for AddrParseError {
 }
 
-impl From<::std::net::AddrParseError> for AddrParseError {
-    fn from(_: ::std::net::AddrParseError) -> Self {
+impl From<std::net::AddrParseError> for AddrParseError {
+    fn from(_: std::net::AddrParseError) -> Self {
         AddrParseError
     }
 }

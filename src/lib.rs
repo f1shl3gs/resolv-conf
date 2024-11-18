@@ -4,12 +4,10 @@
 //!
 //! ## Parsing a config from a string
 //! ```rust
-//! extern crate resolv_conf;
 //!
 //! use std::net::{Ipv4Addr, Ipv6Addr};
 //! use resolv_conf::{ScopedIp, Config, Network};
 //!
-//! fn main() {
 //!     let config_str = "
 //! options ndots:8 timeout:8 attempts:8
 //!
@@ -30,7 +28,7 @@
 //!     let parsed_config = Config::parse(&config_str).expect("Failed to parse config");
 //!
 //!     // We can build configs manually as well, either directly or with Config::new()
-//!     let mut expected_config = Config::new();
+//!     let mut expected_config = Config::default();
 //!     expected_config.nameservers = vec![
 //!         ScopedIp::V6(Ipv6Addr::new(0x2001, 0x4860, 0x4860, 0, 0, 0, 0, 0x8888), None),
 //!         ScopedIp::V6(Ipv6Addr::new(0x2001, 0x4860, 0x4860, 0, 0, 0, 0, 0x8844), None),
@@ -63,7 +61,6 @@
 //!
 //!     // We can compare configurations, since resolv_conf::Config implements Eq
 //!     assert_eq!(parsed_config, expected_config);
-//! }
 //! ```
 //!
 //! ## Parsing a file
@@ -72,9 +69,6 @@
 //! use std::io::Read;
 //! use std::fs::File;
 //!
-//! extern crate resolv_conf;
-//!
-//! fn main() {
 //!     // Read the file
 //!     let mut buf = Vec::with_capacity(4096);
 //!     let mut f = File::open("/etc/resolv.conf").unwrap();
@@ -85,16 +79,10 @@
 //!
 //!     // Print the config
 //!     println!("---- Parsed /etc/resolv.conf -----\n{:#?}\n", cfg);
-//! }
 //! ```
 
 #![warn(missing_debug_implementations)]
 #![warn(missing_docs)]
-
-#[macro_use]
-extern crate quick_error;
-#[cfg(feature = "system")]
-extern crate hostname;
 
 mod grammar;
 mod ip;

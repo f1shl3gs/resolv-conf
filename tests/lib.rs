@@ -1,10 +1,9 @@
-extern crate resolv_conf;
-
-use resolv_conf::{Network, ScopedIp, Lookup, Family};
 use std::path::Path;
 use std::io::Read;
 use std::fs::File;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+
+use resolv_conf::{Network, ScopedIp, Lookup, Family};
 
 #[test]
 fn test_comment() {
@@ -42,17 +41,15 @@ fn test_basic_options() {
 
 #[test]
 fn test_trust_ad() {
-    assert_eq!(
-        parse_str("options edns0 trust-ad").trust_ad,
-        true
+    assert!(
+        parse_str("options edns0 trust-ad").trust_ad
     );
 }
 
 #[test]
 fn test_no_reload() {
-    assert_eq!(
+    assert!(
         parse_str("options no-reload").no_reload,
-        true
     );
 }
 
@@ -90,7 +87,7 @@ fn test_invalid_lines() {
 
 #[test]
 fn test_empty_line() {
-    assert_eq!(parse_str(""), resolv_conf::Config::new());
+    assert_eq!(parse_str(""), resolv_conf::Config::default());
 }
 
 #[test]
@@ -99,9 +96,9 @@ fn test_multiple_options_on_one_line() {
     assert_eq!(config.ndots, 8);
     assert_eq!(config.timeout, 8);
     assert_eq!(config.attempts, 8);
-    assert_eq!(config.rotate, true);
-    assert_eq!(config.inet6, true);
-    assert_eq!(config.no_tld_query, true);
+    assert!(config.rotate);
+    assert!(config.inet6);
+    assert!(config.no_tld_query);
 }
 
 #[test]
@@ -172,7 +169,7 @@ fn parse_file<P: AsRef<Path>>(path: P) -> resolv_conf::Config {
 
 #[test]
 fn test_parse_simple_conf() {
-    let mut config = resolv_conf::Config::new();
+    let mut config = resolv_conf::Config::default();
     config
         .nameservers
         .push(ScopedIp::V4(Ipv4Addr::new(8, 8, 8, 8)));
@@ -184,7 +181,7 @@ fn test_parse_simple_conf() {
 
 #[test]
 fn test_parse_linux_conf() {
-    let mut config = resolv_conf::Config::new();
+    let mut config = resolv_conf::Config::default();
     config.set_domain(String::from("example.com"));
     config.set_search(vec!["example.com".into(), "sub.example.com".into()]);
     config.nameservers = vec![
@@ -218,7 +215,7 @@ fn test_parse_linux_conf() {
 
 #[test]
 fn test_parse_macos_conf() {
-    let mut config = resolv_conf::Config::new();
+    let mut config = resolv_conf::Config::default();
     config.set_domain(String::from("example.com."));
     config.set_search(vec!["example.com.".into(), "sub.example.com.".into()]);
     config.nameservers = vec![
@@ -241,7 +238,7 @@ fn test_parse_macos_conf() {
 
 #[test]
 fn test_openbsd_conf() {
-    let mut config = resolv_conf::Config::new();
+    let mut config = resolv_conf::Config::default();
     config.nameservers = vec![
         ScopedIp::V4(Ipv4Addr::new(8, 8, 8, 8)),
         ScopedIp::V4(Ipv4Addr::new(8, 8, 4, 4)),
@@ -252,27 +249,27 @@ fn test_openbsd_conf() {
 
 #[test]
 fn test_openbsd_grammar() {
-    let mut config = resolv_conf::Config::new();
+    let mut config = resolv_conf::Config::default();
     config.lookup = vec![Lookup::File, Lookup::Bind];
     assert_eq!(resolv_conf::Config::parse("lookup file bind").unwrap(), config);
 
-    let mut config = resolv_conf::Config::new();
+    let mut config = resolv_conf::Config::default();
     config.lookup = vec![Lookup::Bind];
     assert_eq!(resolv_conf::Config::parse("lookup bind").unwrap(), config);
 
-    let mut config = resolv_conf::Config::new();
+    let mut config = resolv_conf::Config::default();
     config.lookup = vec![Lookup::Extra(String::from("unexpected"))];
     assert_eq!(resolv_conf::Config::parse("lookup unexpected").unwrap(), config);
 
-    let mut config = resolv_conf::Config::new();
+    let mut config = resolv_conf::Config::default();
     config.family = vec![Family::Inet4, Family::Inet6];
     assert_eq!(resolv_conf::Config::parse("family inet4 inet6").unwrap(), config);
 
-    let mut config = resolv_conf::Config::new();
+    let mut config = resolv_conf::Config::default();
     config.family = vec![Family::Inet4];
     assert_eq!(resolv_conf::Config::parse("family inet4").unwrap(), config);
 
-    let mut config = resolv_conf::Config::new();
+    let mut config = resolv_conf::Config::default();
     config.family = vec![Family::Inet6];
     assert_eq!(resolv_conf::Config::parse("family inet6").unwrap(), config);
 
@@ -281,7 +278,7 @@ fn test_openbsd_grammar() {
 
 #[test]
 fn test_glibc_normalize() {
-    let mut config = resolv_conf::Config::new();
+    let mut config = resolv_conf::Config::default();
     config.nameservers = vec![
         ScopedIp::V6(
             Ipv6Addr::new(0x2001, 0x4860, 0x4860, 0, 0, 0, 0, 0x8888),
@@ -337,7 +334,7 @@ fn test_glibc_normalize() {
 
 #[test]
 fn test_get_nameservers_or_local() {
-    let config = resolv_conf::Config::new();
+    let config = resolv_conf::Config::default();
     assert_eq!(
         vec![
             ScopedIp::from(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1))),
@@ -351,13 +348,13 @@ fn test_get_nameservers_or_local() {
 #[cfg(feature = "system")]
 #[ignore]
 fn test_get_system_domain() {
-    let config = resolv_conf::Config::new();
+    let config = resolv_conf::Config::default();
     assert_eq!(Some("lan".into()), config.get_system_domain());
 }
 
 #[test]
 fn test_default_display() {
-    let original_config = resolv_conf::Config::new();
+    let original_config = resolv_conf::Config::default();
     let output = original_config.to_string();
     let restored_config = resolv_conf::Config::parse(&output).unwrap();
 
@@ -366,7 +363,7 @@ fn test_default_display() {
 
 #[test]
 fn test_non_default_display() {
-    let mut original_config = resolv_conf::Config::new();
+    let mut original_config = resolv_conf::Config::default();
 
     original_config.nameservers = vec![
         ip("192.168.0.94"),
@@ -415,7 +412,7 @@ fn test_non_default_display() {
 
 #[test]
 fn test_display_preservers_last_search() {
-    let mut original_config = resolv_conf::Config::new();
+    let mut original_config = resolv_conf::Config::default();
 
     original_config.set_search(
         vec!["my.domain", "alt.domain"]
